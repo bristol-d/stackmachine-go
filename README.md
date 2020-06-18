@@ -12,7 +12,7 @@ Instructions are 16 bits long; instructions that take an argument are a total
 of 32 bits long.
 
 name    args    need    diff    desc
-DROP    0       1       -1      Removes the top stack element.
+POP     0       1       -1      Removes the top stack element.
 PUSH    1       0       +1      Pushes a value onto the stack.
 DUP     0       1       +1      Duplicates the stack top.
 SWAP    0       2       =0      Swaps the top two stack elements.

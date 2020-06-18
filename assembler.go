@@ -13,6 +13,12 @@ var TABLE = map[string] (struct {opcode word; argument bool}) {
 	"PUSH": {0x0001, true},
 	"POP" : {0x0002, false},
 	"ADD" : {0x0010, false},
+	"SUB" : {0x0012, false},
+	"MUL" : {0x0013, false},
+	"AND" : {0x0017, false},
+	"OR"  : {0x0018, false},
+	"XOR" : {0x0019, false},
+	"NAND": {0x001A, false},
 }
 
 type linedata struct {
@@ -113,7 +119,7 @@ func parse_line(line string) (linedata, error) {
 			// not a number, then
 			refm := REF_RE.FindStringSubmatch(operand)
 			if refm == nil {
-				return linedata{}, fmt.Errorf("Operand is neither a number nor a valid label: [%s].", operand)
+				return linedata{}, fmt.Errorf("Operand is neither a number with # prefix, nor a valid label: [%s].", operand)
 			}
 			str := refm[1]
 			data.reference = &str
