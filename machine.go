@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type word = uint16
 
 type machine struct {
@@ -35,8 +37,8 @@ func _pop (m *machine) word {
 	if m.nstack == 0 {
 		panic("pop on empty stack")
 	}
-	var x word = m.stack[m.nstack+1]
 	m.nstack--
+	var x word = m.stack[m.nstack]
 	return x
 }
 
@@ -56,16 +58,31 @@ func peek(m *machine) word {
 	return m.stack[m.nstack - 1]
 }
 
+func dump (m *machine) {
+	fmt.Printf("M pc=%04x stack=%d\n", m.pc, m.nstack)
+	fmt.Printf("  next=%04x\n", m.code[m.pc])
+	if m.nstack > 0 {
+		var min word = 1
+		if m.nstack > 2 {
+			min = m.nstack - 2
+		}
+		for i := m.nstack; i >= min; i-- {
+			fmt.Printf("  |%04x|\n", m.stack[i-1])
+		}
+		fmt.Printf("  ------\n")
+	}
+}
+
 func step (m *machine) {
 	// fetch
 	var instruction word = m.code[m.pc]
-	m.pc++
 	// decode
 	var f, err = decode(instruction)
 	if err != OK {
 		m.err = ILLEGAL
 		return
 	}
+	m.pc++
 	// execute
 	result := f(m)
 	if result != OK {
