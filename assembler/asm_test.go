@@ -1,4 +1,4 @@
-package main
+package assembler
 
 import (
 	"testing"
@@ -21,7 +21,7 @@ func TestAssembleSimple(t *testing.T) {
 		0x0002,
 	}
 
-	code, err := assemble_lines(source)
+	code, err := Assemble_lines(source)
 	assert.Nil(t, err)
 	assert.Equal(t, len(bin), len(code))
 

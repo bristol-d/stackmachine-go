@@ -1,26 +1,26 @@
-package main
+package machine
 
 import (
 	"testing"
 	"github.com/stretchr/testify/assert"
 )
 
-func load_program(m *machine, p []word) {
+func load_program(m *Machine, p []word) {
     for i := 0; i < len(p); i++ {
         m.code[i] = p[i]
     }
 }
 
 func TestReset(t *testing.T) {
-    var M machine
+    var M Machine
     m := &M
-    reset(m)
+    Reset(m)
 }
 
 func TestPushPop(t *testing.T) {
-    var M machine
+    var M Machine
     m := &M
-    reset(m)
+    Reset(m)
     if m.nstack != 0 {
         t.Errorf("stack not empty")
     }
@@ -43,9 +43,9 @@ func TestPushPop(t *testing.T) {
 }
 
 func TestAdd(t *testing.T) {
-	var M machine
+	var M Machine
     m := &M
-	reset(m)
+	Reset(m)
 	// push 2; push 3; add
 	load_program(m, []word{0x0001, 0x0002, 0x0001, 0x0003, 0x0010})
 	step(m)

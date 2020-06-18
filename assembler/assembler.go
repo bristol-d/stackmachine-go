@@ -1,4 +1,4 @@
-package main
+package assembler
 
 import (
 	"regexp"
@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 )
+
+type word = uint16
 
 var TABLE = map[string] (struct {opcode word; argument bool}) {
 	// format is (opcode, takes_argument)
@@ -33,7 +35,7 @@ var LINE_RE = regexp.MustCompile("(([a-zA-Z_][a-zA-Z0-9_]+):)?[ \t]*([A-Z]+)?[ \
 var CONST_RE = regexp.MustCompile("#([0-9A-Fa-f]+)")
 var REF_RE = regexp.MustCompile("([A-Za-z_][A-Za-z0-9_]+)")
 
-func assemble_lines(lines []string) ([]word, error) {
+func Assemble_lines(lines []string) ([]word, error) {
 	offset := word(0)
 	code := []word {}
 	var labels = map[string] word {}

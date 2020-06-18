@@ -6,6 +6,8 @@ import (
 	// "io"
 	"bufio"
 	"strings"
+	"./machine"
+	"./assembler"
 )
 
 func usage() {
@@ -27,9 +29,9 @@ func main() {
 		return
 	}
 
-	var M machine
-	var m *machine = &M
-	reset(m)
+	var M machine.Machine
+	var m *machine.Machine = &M
+	machine.Reset(m)
 }
 
 func assemble() {
@@ -46,7 +48,7 @@ func assemble() {
 			lines = append(lines, line)
 		}
 	}
-	program, err := assemble_lines(lines)
+	program, err := assembler.Assemble_lines(lines)
 	if err != nil {
 		fmt.Printf("Error assembling program: %s\n", err.Error())
 		return

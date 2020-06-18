@@ -1,10 +1,10 @@
-package main
+package machine
 
 import "fmt"
 
 type word = uint16
 
-type machine struct {
+type Machine struct {
 	stack [256] word
 	nstack uint16
 	retstack [256] word
@@ -25,7 +25,7 @@ const (
 	VALUE_ERROR = iota // e.g. division by 0
 )
 
-func reset(m *machine) {
+func Reset(m *Machine) {
 	m.pc = 0
 	m.nstack = 0
 	m.nret = 0
@@ -34,7 +34,7 @@ func reset(m *machine) {
 
 // pre: stack not empty
 // this is the internal helper function
-func _pop (m *machine) word {
+func _pop (m *Machine) word {
 	if m.nstack == 0 {
 		panic("pop on empty stack")
 	}
@@ -44,7 +44,7 @@ func _pop (m *machine) word {
 }
 
 // this is an internal helper, not the instruction
-func _push(m *machine, x word) {
+func _push(m *Machine, x word) {
 	if m.nstack > 255 {
 		panic("stack overflow")
 	}
@@ -52,14 +52,14 @@ func _push(m *machine, x word) {
 	m.nstack++
 }
 
-func peek(m *machine) word {
+func peek(m *Machine) word {
 	if m.nstack == 0 {
 		panic("peek on empty stack")
 	}
 	return m.stack[m.nstack - 1]
 }
 
-func dump (m *machine) {
+func dump (m *Machine) {
 	fmt.Printf("M pc=%04x stack=%d\n", m.pc, m.nstack)
 	fmt.Printf("  next=%04x\n", m.code[m.pc])
 	if m.nstack > 0 {
@@ -74,7 +74,7 @@ func dump (m *machine) {
 	}
 }
 
-func step (m *machine) {
+func step (m *Machine) {
 	// fetch
 	var instruction word = m.code[m.pc]
 	// decode
@@ -93,7 +93,7 @@ func step (m *machine) {
 
 // instructions //
 
-func add (m *machine) uint8 {
+func add (m *Machine) uint8 {
 	if m.nstack < 2 {
 		m.err = UNDERFLOW
 		return m.err
@@ -107,7 +107,7 @@ func add (m *machine) uint8 {
 }
 
 // this is the push instruction
-func push (m *machine) uint8 {
+func push (m *Machine) uint8 {
 	if m.nstack > 255 {
 		m.err = OVERFLOW
 		return m.err
@@ -120,7 +120,7 @@ func push (m *machine) uint8 {
 }
 
 // this is the instruction
-func pop (m *machine) uint8 {
+func pop (m *Machine) uint8 {
 	if m.nstack == 0 {
 		m.err = UNDERFLOW
 		return m.err
@@ -129,7 +129,7 @@ func pop (m *machine) uint8 {
 	return OK
 }
 
-func dup (m *machine) uint8 {
+func dup (m *Machine) uint8 {
 	if m.nstack == 0 {
 		m.err = UNDERFLOW
 		return m.err
@@ -143,7 +143,7 @@ func dup (m *machine) uint8 {
 	return OK
 }
 
-func swap (m *machine) uint8 {
+func swap (m *Machine) uint8 {
 	if m.nstack < 2 {
 		m.err = UNDERFLOW
 		return m.err
@@ -155,8 +155,8 @@ func swap (m *machine) uint8 {
 	return OK
 }
 
-func binary_operation(f func(word, word) word) func(*machine) uint8 {
-	return func(m *machine) uint8 {
+func binary_operation(f func(word, word) word) func(*Machine) uint8 {
+	return func(m *Machine) uint8 {
 		if m.nstack < 2 {
 			m.err = UNDERFLOW
 			return m.err
@@ -172,7 +172,7 @@ func binary_operation(f func(word, word) word) func(*machine) uint8 {
 
 // the decoding table //
 
-var INSTRUCTIONS = map[word] func(*machine) uint8 {
+var INSTRUCTIONS = map[word] func(*Machine) uint8 {
 	0x0001: push,
 	0x0002: pop,
 	0x0003: dup,
@@ -192,7 +192,7 @@ var INSTRUCTIONS = map[word] func(*machine) uint8 {
 	//0x001B: not,
 }
 
-func decode(instruction word) (func(*machine) uint8, uint8) {
+func decode(instruction word) (func(*Machine) uint8, uint8) {
 	f, exists := INSTRUCTIONS[instruction]
 	if exists == false {
 		return nil, ILLEGAL
