@@ -4,7 +4,10 @@
 @set GOROOT=C:\Go
 @echo Building wasm ...
 @del go-stackmachine.wasm
-tinygo build -o go-stackmachine.wasm -target wasm ./wasm-main.go
+@rem tinygo build -o go-stackmachine.wasm -target wasm ./wasm-main.go
+set GOOS=js
+set GOARCH=wasm
+go build -o go-stackmachine.wasm
 @if exist go-stackmachine.wasm (
     copy go-stackmachine.wasm ..\web
 )

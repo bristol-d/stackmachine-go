@@ -14,7 +14,8 @@ document.getElementById("menu-about").onclick = function() {
 
 document.getElementById("menu-assemble").onclick = function() {
     inputarea.style.display = "none";
-    status.innerHTML = "";
+    status.innerHTML = "Assembling ...";
+    
 }
 
 function cursorPosition() {
