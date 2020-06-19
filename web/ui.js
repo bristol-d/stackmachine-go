@@ -2,23 +2,20 @@ const inputarea = document.getElementById("inputarea");
 const status = document.getElementById("footer-right");
 
 document.getElementById("close-message").onclick = function() {
-    document.getElementById("overlay").style.display = "none";
+    set_state("overlay", 0);
 }
 
 document.getElementById("menu-about").onclick = function() {
     document.getElementById("message").innerHTML = 
     "<p>Stack machine simulator, developed by David for the University of Bristol's 'Overview of Computer Architecture' unit.<p/>" +
     "<p>Design inspired by Windows 3.1 :)</p>"
-    document.getElementById("overlay").style.display = "block";
+    set_state("overlay", 1);
 }
 
 document.getElementById("menu-assemble").onclick = function() {
-    inputarea.style.display = "none";
     status.innerHTML = "Assembling ...";
     result = assemble(inputarea.value);
     status.innerHTML = "Assembly complete";
-    //document.getElementById("inputarea").style.display = "none";
-    //document.getElementById("binary-container").style.display = "";
     set_state("edit", 0);
     document.getElementById("binary-container").innerHTML = result;
 }
