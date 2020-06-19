@@ -5,6 +5,52 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestConsumeLabel(t *testing.T) {
+	s1 := "start:"
+	label, rest := consume_label([]rune(s1))
+	assert.Equal(t, "start", string(label))
+	assert.Equal(t, "", string(rest))
+
+	s2 := "start: rest"
+	label, rest = consume_label([]rune(s2))
+	assert.Equal(t, "start", string(label))
+	assert.Equal(t, " rest", string(rest))
+
+	s3 := "nolabel"
+	label, rest = consume_label([]rune(s3))
+	assert.Nil(t, label)
+	assert.Equal(t, "nolabel", string(rest))
+
+}
+
+func TestConsumeSpaces(t *testing.T) {
+	c, s := consume_spaces([]rune("word"))
+	assert.False(t, c)
+	assert.Equal(t, "word", string(s))
+
+	c, s = consume_spaces([]rune("  word"))
+	assert.True(t, c)
+	assert.Equal(t, "word", string(s))
+
+	c, s = consume_spaces([]rune("\tword"))
+	assert.True(t, c)
+	assert.Equal(t, "word", string(s))
+}
+
+func TestConsumeOpcode(t *testing.T) {
+	opcode, rest := consume_opcode([]rune("PUSH"))
+	assert.Equal(t, "PUSH", string(opcode))
+	assert.Equal(t, "", string(rest))
+	
+	opcode, rest = consume_opcode([]rune("PUSH #20"))
+	assert.Equal(t, "PUSH", string(opcode))
+	assert.Equal(t, " #20", string(rest))
+
+	opcode, rest = consume_opcode([]rune(" PUSH"))
+	assert.Nil(t, opcode)
+	assert.Equal(t, " PUSH", string(rest))
+}
+
 func TestParseLabel(t *testing.T) {
 	d, e := parse_line("start:")
 	assert.Nil(t, e)

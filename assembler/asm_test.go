@@ -7,7 +7,7 @@ import (
 
 func TestAssembleSimple(t *testing.T) {
 	var source = []string  {
-		"// test program",
+		"; test program",
 		"  PUSH #1234",
 		"  PUSH #face",
 		"  ADD",

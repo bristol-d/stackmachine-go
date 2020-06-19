@@ -1,7 +1,6 @@
 package assembler
 
 import (
-	"regexp"
 	"errors"
 	"fmt"
 	"strconv"
@@ -31,9 +30,82 @@ type linedata struct {
 	reference *string
 } 
 
-var LINE_RE = regexp.MustCompile("(([a-zA-Z_][a-zA-Z0-9_]+):)?[ \t]*([A-Z]+)?[ \t]*([0-9a-zA-Z_#]+)?")
-var CONST_RE = regexp.MustCompile("#([0-9A-Fa-f]+)")
-var REF_RE = regexp.MustCompile("([A-Za-z_][A-Za-z0-9_]+)")
+func is_capital (r rune) bool {
+	if r >= 'A' && r <= 'Z' { return true }
+	return false
+}
+
+func is_alpha(r rune) bool {
+	if r >= 'A' && r <= 'Z' { return true }
+	if r >= 'a' && r <= 'z' { return true }
+	if r == '_' { return true }
+	return false
+}
+
+func is_alphanum(r rune) bool {
+	if is_alpha(r) { return true }
+	if r >= '0' && r <= '9' { return true }
+	return false
+}
+
+// Consume a leading [A-Za-z_][A-Za-z_0-9]*[:]
+// return (label, rest) where label may be nil
+func consume_label(source []rune) ([]rune, []rune) {
+	s := source
+	if len(s) == 0 || !is_alpha(s[0]) { return nil, s }
+	count := 1
+	s = s[1:]
+	for len(s) > 0 {
+		if !is_alphanum(s[0]) { break }
+		s = s[1:]
+		count += 1
+	}
+	if len(s) > 0 && s[0] == ':' {
+		return source[0:count], s[1:]
+	} else {
+		return nil, source
+	}
+}
+
+func consume_operand(source []rune) ([]rune, []rune) {
+	s := source
+	if len(s) == 0 || (!is_alpha(s[0]) && s[0] != '#') { return nil, s }
+	count := 1
+	s = s[1:]
+	for len(s) > 0 {
+		if !is_alphanum(s[0]) { break }
+		s = s[1:]
+		count += 1
+	}
+	return source[0:count-1], s
+}
+
+func consume_spaces(source []rune) (bool, []rune) {
+	change := false
+	for len(source) > 0 {
+		if source[0] == ' ' || source[0] == '\n' || source[0] == '\t' || source[0] == '\r' {
+			source = source[1:]
+			change = true
+		} else {
+			break
+		}
+	}
+	return change, source
+}
+
+func consume_opcode(source []rune) ([]rune, []rune) {
+	original := source
+	if len(source) == 0 || !is_capital(source[0]) {
+		return nil, source
+	}
+	count := 1
+	for len(source) > 0 {
+		if !is_capital(source[0]) { break }
+		count += 1
+		source = source[1:]
+	}
+	return original[0:count-1], source
+}
 
 func Assemble_lines(lines []string) ([]word, error) {
 	offset := word(0)
@@ -78,7 +150,7 @@ func Assemble_lines(lines []string) ([]word, error) {
 }
 
 func strip_line(line string) string {
-	comment := strings.Index(line, "//")
+	comment := strings.Index(line, ";")
 	if comment != -1 {
 		line = line[0:comment]
 	}
@@ -87,56 +159,53 @@ func strip_line(line string) string {
 }
 
 func parse_line(line string) (linedata, error) {
-	// match returns: _, _, label, opcode, arg
-	m := LINE_RE.FindStringSubmatch(line)
-	if m == nil {
-		return linedata{}, errors.New("Incorrect line format.")
-	}
-	var data = linedata{}
-	if m[2] != "" {
-		data.label = &m[2]
-		if m[3] == "" {
-			// pure label, no opcode
-			return data, nil
-		}
-	}
-	if m[3] == "" {
-		return linedata{}, errors.New("Incorrect line.")
+	runes := []rune(line)
+	var label, opcode, operand []rune
+	var space bool
+	label, runes = consume_label(runes)
+	_, runes = consume_spaces(runes)
+	opcode, runes = consume_opcode(runes)
+	space, runes = consume_spaces(runes)
+	operand, runes = consume_operand(runes) 
+
+	if opcode == nil {
+		return linedata{}, errors.New("Incorrect line format or no opcode found.")
 	}
 
-	var keyword = m[3]
-	s, ok := TABLE[keyword]
-	if !ok {
-		return linedata{}, fmt.Errorf("Illegal command: %s.", keyword)
+	var data = linedata{}
+	if label == nil {
+		data.label = nil
+	} else {
+		str := string(label)
+		data.label = &str
 	}
-	data.opcode = s.opcode
-	if s.argument {
-		data.len = 2
-		operand := m[4]
-		if operand == "" {
-			return linedata{}, fmt.Errorf("Instruction %s requires an argument.", keyword)
+	opstr := string(opcode)
+	op, ok := TABLE[opstr]
+	if !ok {
+		return linedata{}, fmt.Errorf("Illegal command: %s.", opstr)
+	}
+	data.opcode = op.opcode
+	if operand == nil {
+		if op.argument {
+			return linedata{}, fmt.Errorf("Instruction %s requires an argument.", opstr)
+		} 
+	} else {
+		if !op.argument {
+			return linedata{}, fmt.Errorf("Instruction %s does not take an argument.", opstr)
 		}
-		mm := CONST_RE.FindStringSubmatch(operand)
-		if mm == nil {
-			// not a number, then
-			refm := REF_RE.FindStringSubmatch(operand)
-			if refm == nil {
-				return linedata{}, fmt.Errorf("Operand is neither a number with # prefix, nor a valid label: [%s].", operand)
-			}
-			str := refm[1]
-			data.reference = &str
-		} else {
-			val := mm[1]
-			num, err := strconv.ParseUint(val, 16, 16)
+		if!space {
+			return linedata{}, errors.New("No space after opcode.")
+		}
+		if operand[0] == '#' {
+			num, err := strconv.ParseUint(string(operand[1:]), 16, 16)
 			if err != nil {
 				return linedata{}, errors.New("Illegal constant operand.")
 			}
 			data.operand = word(num)
-		}
-	} else {
-		data.len = 1
-		if m[4] != "" {
-			return linedata{}, fmt.Errorf("Instruction %s does not take an argument.", keyword)
+		} else {
+			// it's a reference to a label
+			ref := string(operand)
+			data.reference = &ref
 		}
 	}
 
