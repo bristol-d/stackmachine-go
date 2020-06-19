@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>Stack Machine Simulator</title>
+        <script src="wasm_exec.js"></script>
+    </head>
+    <body>
+
+        <script>
+            const SOURCE = "go-stackmachine.wasm";
+            const go = new Go();
+            let module, instance;
+            WebAssembly.instantiateStreaming(fetch(SOURCE), go.importObject).then(
+                (result) => {
+                    mod = result.module;
+                    instance = result.instance;
+                    console.log("Loaded WebAssembly module.");
+                }
+            ).catch((err) => {
+                console.error(err);
+            });
+        </script>
+    </body>
+</html>
