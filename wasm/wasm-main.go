@@ -2,8 +2,14 @@ package main
 
 import (
 	"fmt"
+	"../machine"
 )
 
+var m *machine.Machine
+
 func main() {
-	fmt.Println("hello from tinygo")
+	var M = machine.Machine {}
+	m = &M
+	machine.Reset(m)
+	fmt.Println("Loaded stack machine.")
 }

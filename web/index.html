@@ -16,10 +16,15 @@
                     mod = result.module;
                     instance = result.instance;
                     console.log("Loaded WebAssembly module.");
+                    initialise();
                 }
             ).catch((err) => {
                 console.error(err);
             });
+
+            async function initialise() {
+                await go.run(instance);
+            }
         </script>
     </body>
 </html>
