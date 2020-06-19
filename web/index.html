@@ -4,8 +4,42 @@
         <meta charset="utf-8" />
         <title>Stack Machine Simulator</title>
         <script src="wasm_exec.js"></script>
+        <link href="style.css" rel="stylesheet" />
     </head>
     <body>
+        <header>
+            <ul class="menu">
+                <li id="menu-assemble">Assemble</li>
+                <li id="menu-about">About</li>
+            </ul>
+        </header>
+
+        <section id="input">
+            <div class="textarea-container">
+                <textarea id="inputarea">
+; type your code here
+; everything after a semicolon is a comment
+</textarea>
+            </div>  
+        </section>
+        <section id="stack">#stack</section>
+        <section id="controls">#controls</section>
+
+        <footer>
+            Stack machine simulator
+            <div id="footer-right">R</div>
+        </footer>
+
+        <div id="overlay">
+            <div class="messagebox">
+                <div class="messagebox-content">
+                    <p id="message">text</p>
+                    <div class="buttonbar">
+                        <button type="button" id="close-message">OK</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <script>
             const SOURCE = "go-stackmachine.wasm";
@@ -26,5 +60,7 @@
                 await go.run(instance);
             }
         </script>
+
+        <script src="ui.js"></script>
     </body>
 </html>
