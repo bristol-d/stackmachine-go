@@ -9,7 +9,8 @@
     <body>
         <header>
             <ul class="menu">
-                <li id="menu-assemble">Assemble</li>
+                <li id="menu-assemble" x-display="edit:1">Assemble</li>
+                <li id="menu-edit" x-display="edit:0">Edit</li>
                 <li id="menu-about">About</li>
             </ul>
         </header>
@@ -20,7 +21,9 @@
 ; type your code here
 ; everything after a semicolon is a comment
 </textarea>
-            </div>  
+                <div id="binary-container" style="display:none"></div>
+            </div>
+              
         </section>
         <section id="stack">#stack</section>
         <section id="controls">#controls</section>

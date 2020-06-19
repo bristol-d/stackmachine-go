@@ -15,7 +15,12 @@ document.getElementById("menu-about").onclick = function() {
 document.getElementById("menu-assemble").onclick = function() {
     inputarea.style.display = "none";
     status.innerHTML = "Assembling ...";
-    
+    result = assemble(inputarea.value);
+    status.innerHTML = "Assembly complete";
+    //document.getElementById("inputarea").style.display = "none";
+    //document.getElementById("binary-container").style.display = "";
+    set_state("edit", 0);
+    document.getElementById("binary-container").innerHTML = result;
 }
 
 function cursorPosition() {
@@ -46,3 +51,43 @@ inputarea.onpaste = cursorPosition;
 inputarea.oncut = cursorPosition;
 inputarea.onselect = cursorPosition;
 inputarea.onselectstart = cursorPosition;
+
+BINDINGS = {
+
+}
+
+STATE = {
+    edit: 1
+}
+
+items = document.querySelectorAll("[x-display]");
+for (i=0; i < items.length; i++) {
+    data = items[i].attributes["x-display"].value.split(":");
+    if (data.length != 2) {
+        continue;
+    }
+    key = data[0];
+    value = data[1];
+    if (typeof(BINDINGS[key]) === 'undefined') {
+        BINDINGS[key]=[];
+    }
+    BINDINGS[key].push({val: value, elem: items[i]});
+    if (typeof(STATE[key]) === 'undefined') {
+        STATE[key] = 0;
+    }
+    if (STATE[key] != value) {
+        items[i].style.display = "none";
+    }
+}
+
+function set_state(key, value) {
+    STATE[key] = value;
+    if (typeof(BINDINGS[key]) === 'undefined') {
+        return;
+    }
+    items = BINDINGS[key];
+    for (i = 0; i < items.length; i++) {
+        item = items[i];
+        item.elem.style.display = value == item.val ? "" : "none";
+    }
+}
