@@ -7,10 +7,17 @@
         <link href="style.css" rel="stylesheet" />
     </head>
     <body>
-        <header>
-            <ul class="menu">
-                <li id="menu-assemble" x-display="edit:1">Assemble</li>
-                <li id="menu-edit" x-display="edit:0">Edit</li>
+        <header class="menu">
+            <ul>
+                <li id="menu-assemble" x-display="edit:1">Assemble</li>    
+            </ul>
+            <ul x-display="edit:0">
+                <li id="menu-edit">Edit</li>
+                <li id="menu-reset">Reset</li>
+                <li id="menu-step" x-display="machine:1">Step</li>
+                <li id="menu-run" x-display="machine:1">Run</li>
+            </ul>
+            <ul>
                 <li id="menu-about">About</li>
             </ul>
         </header>
@@ -26,7 +33,14 @@
               
         </section>
         <section id="stack">#stack</section>
-        <section id="controls">#controls</section>
+        <section id="controls">
+            <div x-display="edit:0">
+                <button id="button-reset" type="button">Reset</button>
+                <button id="button-step" x-enable="machine:1">Step</button>
+                <button id="button-run" x-enable="machine:1">Run</button>
+                <p id="controls-info"></p>
+            </div>
+        </section>
 
         <footer>
             Stack machine simulator

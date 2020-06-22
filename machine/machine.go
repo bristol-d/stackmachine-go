@@ -33,6 +33,15 @@ func Reset(m *Machine) {
 	m.err = OK
 }
 
+func Load(m *Machine, p []word) {
+    for i := 0; i < len(p); i++ {
+        m.code[i] = p[i]
+	}
+	for i := len(p); i < len(m.code); i++ {
+		m.code[i] = word(0)
+	}
+}
+
 // pre: stack not empty
 // this is the internal helper function
 func _pop (m *Machine) word {
@@ -73,6 +82,30 @@ func dump (m *Machine) {
 		}
 		fmt.Printf("  ------\n")
 	}
+}
+
+func Dump (m *Machine) map[string] interface{} {
+	top := word(0)
+	if m.nstack > 0 {
+		top = m.stack[m.nstack - 1]
+	}
+
+	return map[string] interface{} {
+		"pc": m.pc,
+		"err": m.err,
+		"n": m.nstack,
+		"top": top,
+		"stack": m.stack[0:m.nstack],
+		"code": m.code[0:8],
+	}
+}
+
+func Step (m *Machine) uint8 {
+	if m.err != OK {
+		return m.err
+	}
+	step(m)
+	return m.err
 }
 
 func step (m *Machine) {
