@@ -11,6 +11,8 @@ type word = uint16
 
 var TABLE = map[string] (struct {opcode word; argument bool}) {
 	// format is (opcode, takes_argument)
+	"HALT": {0x0000, false},
+
 	"PUSH": {0x0001, true},
 	"POP" : {0x0002, false},
 	"DUP" : {0x0003, false},
@@ -25,6 +27,24 @@ var TABLE = map[string] (struct {opcode word; argument bool}) {
 	"XOR" : {0x0203, false},
 	"NAND": {0x0204, false},
 	"NOT" : {0x0205, false},
+	"SHR" : {0x0206, false},
+	"SSR" : {0x0207, false},
+	"SHL" : {0x0208, false},
+	"SWE" : {0x0209, false},
+
+	"CEQ" : {0x0301, false},
+	"CNE" : {0x0302, false},
+	"CGT" : {0x0303, false},
+	"CGE" : {0x0304, false},
+	"CLT" : {0x0305, false},
+	"CLE" : {0x0306, false},
+
+	"J"   : {0x0401, true},
+	"JS"  : {0x0402, false},
+	"JT"  : {0x0403, true},
+	"JTS" : {0x0404, false},
+	"JF"  : {0x0405, true},
+	"JFS" : {0x0406, false},
 }
 
 type linedata struct {
@@ -233,6 +253,9 @@ func Disassemble(code []word, numbering bool) []string {
 		for name, op := range TABLE {
 			if code[count] == op.opcode {
 				m = name
+				for len(m) < 4 {
+					m += " "
+				}
 				if op.argument {
 					arg = true
 					count++

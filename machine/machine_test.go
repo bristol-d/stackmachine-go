@@ -47,10 +47,55 @@ func TestAdd(t *testing.T) {
     m := &M
 	Reset(m)
 	// push 2; push 3; add
-	load_program(m, []word{0x0001, 0x0002, 0x0001, 0x0003, 0x0010})
+	load_program(m, []word{0x0001, 0x0002, 0x0001, 0x0003, 0x0101})
 	step(m)
 	step(m)
 	step(m)
 	assert.Equal(t, word(1), m.nstack)
 	assert.Equal(t, word(5), peek(m))
+}
+
+func TestShifts(t *testing.T) {
+	var M Machine
+	m := &M
+	Reset(m)
+
+	// 0x0100 >> 0x0001 == 0x0080
+	// PUSH 0x0100, PUSH 1, SHR
+	load_program(m, []word{0x0001, 0x0100, 0x0001, 0x0001, 0x0206})
+	step(m)
+	step(m)
+	step(m)
+	assert.Equal(t, word(1), m.nstack)
+	assert.Equal(t, word(0x0080), peek(m))
+
+	// 0xFFFF >> 0x0002 == 0x3FFF
+	// PUSH 0xFFFF, PUSH 0x0002, SHR
+	Reset(m)
+	load_program(m, []word{0x0001, 0xFFFF, 0x0001, 0x0002, 0x0206})
+	step(m)
+	step(m)
+	step(m)
+	assert.Equal(t, word(1), m.nstack)
+	assert.Equal(t, word(0x3FFF), peek(m))
+
+	// 0xFFFF >>> 0x0002 == 0xFFFF
+	// PUSH 0xFFFF, PUSH 0x0002, SSR
+	Reset(m)
+	load_program(m, []word{0x0001, 0xFFFF, 0x0001, 0x0002, 0x0207})
+	step(m)
+	step(m)
+	step(m)
+	assert.Equal(t, word(1), m.nstack)
+	assert.Equal(t, word(0xFFFF), peek(m))
+
+	// 0xF000 >>> 0x0004 == 0xFF00
+	// PUSH 0xF000, PUSH 0x0004, SSR
+	Reset(m)
+	load_program(m, []word{0x0001, 0xF000, 0x0001, 0x0004, 0x0207})
+	step(m)
+	step(m)
+	step(m)
+	assert.Equal(t, word(1), m.nstack)
+	assert.Equal(t, word(0xFF00), peek(m))
 }

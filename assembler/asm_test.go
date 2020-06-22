@@ -41,7 +41,7 @@ func TestAssembleSimple(t *testing.T) {
 func TestDisassemble (t *testing.T) {
 	code := []word {0x0002}
 	text := Disassemble(code, false)
-	assert.Equal(t, []string{"0002      POP"}, text)
+	assert.Equal(t, []string{"0002      POP "}, text)
 }
 
 func TestDisassembleOperand (t *testing.T) {

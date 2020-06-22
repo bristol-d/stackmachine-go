@@ -23,6 +23,7 @@ const (
 	OVERFLOW = iota
 	RET_OVERFLOW = iota
 	VALUE_ERROR = iota // e.g. division by 0
+	HALT = iota
 )
 
 func Reset(m *Machine) {
@@ -181,9 +182,121 @@ func binary_not(m *Machine) uint8 {
 	return OK
 }
 
+/// bool to word (apparently go doesn't like doing this implicitly)
+func bw(b bool) word {
+	if b {
+		return 0x0001
+	} else {
+		return 0x0000
+	}
+}
+
+func jump_indirect(m *Machine) uint8 {
+	if m.nstack < 1 {
+		m.err = UNDERFLOW
+		return m.err
+	}
+	target := _pop(m)
+	m.pc = target
+	return OK
+}
+
+
+func jump(m *Machine) uint8 {
+	target := m.code[m.pc]
+	m.pc++
+	m.pc = target
+	return OK
+}
+
+func jump_true(m *Machine) uint8 {
+	if m.nstack < 1 {
+		m.err = UNDERFLOW
+		return m.err
+	}
+	condition := _pop(m)
+	target := m.code[m.pc]
+	m.pc++
+	if condition & 0x01 == 0x01 {
+		m.pc = target
+	}
+	return OK
+}
+
+func jump_false(m *Machine) uint8 {
+	if m.nstack < 1 {
+		m.err = UNDERFLOW
+		return m.err
+	}
+	condition := _pop(m)
+	target := m.code[m.pc]
+	m.pc++
+	if condition & 0x01 == 0x00 {
+		m.pc = target
+	}
+	return OK
+}
+
+func jump_true_indirect(m *Machine) uint8 {
+	if m.nstack < 2 {
+		m.err = UNDERFLOW
+		return m.err
+	}
+	target := _pop(m)
+	condition := _pop(m)
+	if condition & 0x01 == 0x01 {
+		m.pc = target
+	}
+	return OK
+}
+
+func jump_false_indirect(m *Machine) uint8 {
+	if m.nstack < 2 {
+		m.err = UNDERFLOW
+		return m.err
+	}
+	target := _pop(m)
+	condition := _pop(m)
+	if condition & 0x01 == 0x00 {
+		m.pc = target
+	}
+	return OK
+}
+
+// signed shift right
+func op_ssr(m *Machine) uint8 {
+	if m.nstack < 2 {
+		m.err = UNDERFLOW
+		return m.err
+	}
+	y := _pop(m)
+	x := _pop(m)
+	if (y >= 16) {
+		_push(m, word(0))
+		return OK
+	}
+
+	var hi bool = (x & 0x8000) == 0x8000
+	r := x >> y
+	var mask word = 0
+	if hi {
+		mask = 0xffff << (16-y)
+	}
+	r |= mask
+	_push(m, r)
+	return OK
+}
+
+func halt(m *Machine) uint8 {
+	m.pc-- // undo PC increment
+	return HALT
+}
+
 // the decoding table //
 
 var INSTRUCTIONS = map[word] func(*Machine) uint8 {
+	0x0000: halt,
+
 	0x0001: push,
 	0x0002: pop,
 	0x0003: dup,
@@ -201,6 +314,24 @@ var INSTRUCTIONS = map[word] func(*Machine) uint8 {
 	0x0203: binary_operation(func(x, y word) word {return x ^ y}),
 	0x0204: binary_operation(func(x, y word) word {return ^(x & y)}),
 	0x0205: binary_not,
+	0x0206: binary_operation(func(x, y word) word {return x >> y}),
+	0x0207: op_ssr,
+	0x0208: binary_operation(func(x, y word) word {return x << y}),
+
+	0x0301: binary_operation(func(x, y word) word {return bw(x == y)}),
+	0x0302: binary_operation(func(x, y word) word {return bw(x != y)}),
+	0x0303: binary_operation(func(x, y word) word {return bw(x >  y)}),
+	0x0304: binary_operation(func(x, y word) word {return bw(x >= y)}),
+	0x0305: binary_operation(func(x, y word) word {return bw(x <  y)}),
+	0x0306: binary_operation(func(x, y word) word {return bw(x <= y)}),
+
+	0x0401: jump,
+	0x0402: jump_indirect,
+	0x0403: jump_true,
+	0x0404: jump_true_indirect,
+	0x0405: jump_false,
+	0x0406: jump_false_indirect,
+
 }
 
 func decode(instruction word) (func(*Machine) uint8, uint8) {
