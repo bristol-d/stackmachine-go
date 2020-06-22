@@ -97,6 +97,10 @@ footer {
     border: none;
 }
 
+#binary-container {
+    white-space: pre;
+}
+
 #overlay {
     position: absolute;
     width: 100%;

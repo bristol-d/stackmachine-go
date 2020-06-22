@@ -223,3 +223,37 @@ func parse_line(line string) (linedata, error) {
 
 	return data, nil
 }
+
+func Disassemble(code []word, numbering bool) []string {
+	text := []string {}
+
+	for count := 0; count < len(code); count++ {
+		m := "??"
+		arg := false
+		for name, op := range TABLE {
+			if code[count] == op.opcode {
+				m = name
+				if op.argument {
+					arg = true
+					count++
+					m = m + " #" + fmt.Sprintf("%x", code[count])
+				}
+				break
+			}
+		}
+		if arg {
+			m = fmt.Sprintf("%04x %04x %s", code[count-1], code[count], m)
+		} else {
+			m = fmt.Sprintf("%04x      %s", code[count], m)
+		}
+		if (numbering) {
+			pos := count
+			if arg {
+				pos--
+			}
+			m = fmt.Sprintf("0x%04x: %s", pos, m)
+		}
+		text = append(text, m)
+	}
+	return text
+}

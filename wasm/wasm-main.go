@@ -25,9 +25,12 @@ func main() {
 func assemble (this js.Value, input []js.Value) interface{} {
 	source := input[0].String()
 	lines := strings.Split(source, "\n")
-	_, err := assembler.Assemble_lines(lines)
+	code, err := assembler.Assemble_lines(lines)
 	if err != nil {
 		return js.ValueOf(err.Error())
 	}
-	return js.ValueOf("OK")
+
+	text := assembler.Disassemble(code, true)
+
+	return js.ValueOf(strings.Join(text, "<br />"))
 }
