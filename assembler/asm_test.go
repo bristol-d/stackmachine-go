@@ -5,6 +5,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestAssembleNoOperand(t *testing.T) {
+	var source = []string {"ADD"}
+		var bin = []word {0x0101}
+	code, err := Assemble_lines(source)
+	assert.Nil(t, err)
+	assert.Equal(t, bin, code)
+}
+
 func TestAssembleSimple(t *testing.T) {
 	var source = []string  {
 		"; test program",
@@ -17,7 +25,7 @@ func TestAssembleSimple(t *testing.T) {
 	var bin = []word {
 		0x0001, 0x1234,
 		0x0001, 0xface,
-		0x0010,
+		0x0101,
 		0x0002,
 	}
 

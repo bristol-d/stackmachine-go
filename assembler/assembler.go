@@ -13,13 +13,18 @@ var TABLE = map[string] (struct {opcode word; argument bool}) {
 	// format is (opcode, takes_argument)
 	"PUSH": {0x0001, true},
 	"POP" : {0x0002, false},
-	"ADD" : {0x0010, false},
-	"SUB" : {0x0012, false},
-	"MUL" : {0x0013, false},
-	"AND" : {0x0017, false},
-	"OR"  : {0x0018, false},
-	"XOR" : {0x0019, false},
-	"NAND": {0x001A, false},
+	"DUP" : {0x0003, false},
+	"SWAP": {0x0004, false},
+
+	"ADD" : {0x0101, false},
+	"SUB" : {0x0103, false},
+	"MUL" : {0x0104, false},
+
+	"AND" : {0x0201, false},
+	"OR"  : {0x0202, false},
+	"XOR" : {0x0203, false},
+	"NAND": {0x0204, false},
+	"NOT" : {0x0205, false},
 }
 
 type linedata struct {
@@ -77,7 +82,7 @@ func consume_operand(source []rune) ([]rune, []rune) {
 		s = s[1:]
 		count += 1
 	}
-	return source[0:count-1], s
+	return source[0:count], s
 }
 
 func consume_spaces(source []rune) (bool, []rune) {
@@ -168,7 +173,7 @@ func parse_line(line string) (linedata, error) {
 	space, runes = consume_spaces(runes)
 	operand, runes = consume_operand(runes) 
 
-	if opcode == nil {
+	if opcode == nil && label == nil {
 		return linedata{}, errors.New("Incorrect line format or no opcode found.")
 	}
 
@@ -179,17 +184,24 @@ func parse_line(line string) (linedata, error) {
 		str := string(label)
 		data.label = &str
 	}
+
+	if opcode == nil {
+		return data, nil
+	}
+
 	opstr := string(opcode)
 	op, ok := TABLE[opstr]
 	if !ok {
 		return linedata{}, fmt.Errorf("Illegal command: %s.", opstr)
 	}
 	data.opcode = op.opcode
+	data.len = 1
 	if operand == nil {
 		if op.argument {
 			return linedata{}, fmt.Errorf("Instruction %s requires an argument.", opstr)
 		} 
 	} else {
+		data.len = 2
 		if !op.argument {
 			return linedata{}, fmt.Errorf("Instruction %s does not take an argument.", opstr)
 		}

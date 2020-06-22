@@ -20,6 +20,10 @@ document.getElementById("menu-assemble").onclick = function() {
     document.getElementById("binary-container").innerHTML = result;
 }
 
+document.getElementById("menu-edit").onclick = function() {
+    set_state("edit", 1);
+}
+
 function cursorPosition() {
     start = inputarea.selectionStart;
     end = inputarea.selectionEnd;

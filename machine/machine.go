@@ -170,6 +170,17 @@ func binary_operation(f func(word, word) word) func(*Machine) uint8 {
 	}
 } 
 
+func binary_not(m *Machine) uint8 {
+	if m.nstack < 1 {
+		m.err = UNDERFLOW
+		return m.err
+	}
+	x := _pop(m)
+	x = ^x
+	_push(m, x)
+	return OK
+}
+
 // the decoding table //
 
 var INSTRUCTIONS = map[word] func(*Machine) uint8 {
@@ -178,18 +189,18 @@ var INSTRUCTIONS = map[word] func(*Machine) uint8 {
 	0x0003: dup,
 	0x0004: swap,
 
-	0x0010: add,
+	0x0101: add,
 	//0x0011: addc,
-	0x0012: binary_operation(func(x, y word) word {return x - y}),
-	0x0013: binary_operation(func(x, y word) word {return x * y}),
+	0x0103: binary_operation(func(x, y word) word {return x - y}),
+	0x0104: binary_operation(func(x, y word) word {return x * y}),
 	//0x0014: muld,
 	//0x0015: mod,
 	//0x0016: div,
-	0x0017: binary_operation(func(x, y word) word {return x & y}),
-	0x0018: binary_operation(func(x, y word) word {return x | y}),
-	0x0019: binary_operation(func(x, y word) word {return x ^ y}),
-	0x001A: binary_operation(func(x, y word) word {return ^(x & y)}),
-	//0x001B: not,
+	0x0201: binary_operation(func(x, y word) word {return x & y}),
+	0x0202: binary_operation(func(x, y word) word {return x | y}),
+	0x0203: binary_operation(func(x, y word) word {return x ^ y}),
+	0x0204: binary_operation(func(x, y word) word {return ^(x & y)}),
+	0x0205: binary_not,
 }
 
 func decode(instruction word) (func(*Machine) uint8, uint8) {

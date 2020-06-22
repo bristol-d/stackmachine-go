@@ -51,6 +51,20 @@ func TestConsumeOpcode(t *testing.T) {
 	assert.Equal(t, " PUSH", string(rest))
 }
 
+func TestConsumeOperand(t *testing.T) {
+	operand, rest := consume_operand([]rune ("#1"))
+	assert.Equal(t, []rune("#1"), operand)
+	assert.Equal(t, []rune(""), rest)
+
+	operand, rest = consume_operand([]rune ("#1234"))
+	assert.Equal(t, []rune("#1234"), operand)
+	assert.Equal(t, []rune(""), rest)
+
+	operand, rest = consume_operand([]rune ("#12 "))
+	assert.Equal(t, []rune("#12"), operand)
+	assert.Equal(t, []rune(" "), rest)
+}
+
 func TestParseLabel(t *testing.T) {
 	d, e := parse_line("start:")
 	assert.Nil(t, e)
