@@ -13,7 +13,7 @@
             </ul>
             <ul x-display="edit:0">
                 <li id="menu-edit">Edit</li>
-                <li id="menu-reset">Reset</li>
+                <li id="menu-reset" x-display="can_reset:1">Reset</li>
                 <li id="menu-step" x-display="machine:1">Step</li>
                 <li id="menu-run" x-display="machine:1">Run</li>
             </ul>
@@ -32,12 +32,17 @@
             </div>
               
         </section>
-        <section id="stack">#stack</section>
+        <section id="stack">
+            <p class="heading">Stack</p>
+            <div class="stack-container">
+                <p class="bottom" id="stack-display"></p>
+            </div>
+        </section>
         <section id="controls">
             <div x-display="edit:0">
-                <button id="button-reset" type="button">Reset</button>
-                <button id="button-step" x-enable="machine:1">Step</button>
-                <button id="button-run" x-enable="machine:1">Run</button>
+                <button id="button-reset" type="button" x-enable="can_reset:1">Reset</button>
+                <button id="button-step" type="button" x-enable="machine:1">Step</button>
+                <button id="button-run" type="button" x-enable="machine:1">Run</button>
                 <p id="controls-info"></p>
             </div>
         </section>

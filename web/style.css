@@ -166,3 +166,28 @@ button:focus {
 #controls-info {
     white-space: pre;
 }
+
+#stack {
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+}
+
+#stack p {
+    margin: 0;
+}
+
+#stack .heading {
+    text-decoration: underline;
+}
+
+.stack-container {
+    flex-grow: 1;
+    display: flex;
+}
+
+.stack-container p.bottom {
+    align-self: flex-end;
+    margin: 0;
+    white-space: pre;
+}

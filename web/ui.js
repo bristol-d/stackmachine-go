@@ -51,12 +51,30 @@ function dump() {
     var dump = JSON.parse(dump_simulation());
     document.getElementById("controls-info").innerHTML = 
 `PC: ${hex(dump.pc)}
+Next: ${dump.next}
 Machine state: ${MSTATE[dump.err]}
 Stack size: ${dump.n}, top: ${dump.n > 0 ? hex(dump.top) : "n/a"}
 ` ;
     if (dump.err > 0) {
         set_state("machine", 0);
     }
+    var s = "(empty stack)";
+    var l = dump.stack.length;
+    if (l > 0) {
+        s = "";
+        var start = 0;
+        if (l > 8) {
+            start = l - 8; 
+        }
+        for (i = l-1; i >= start; i--) {
+            s += hex(dump.stack[i]) + "\n";
+        }
+        if (l > 8) {
+            s += "(...)";
+        }
+    }
+    document.getElementById("stack-display").innerHTML = s;
+    return dump;
 }
 
 document.getElementById("menu-edit").onclick = function() {
@@ -75,11 +93,47 @@ function step() {
     dump();
 }
 
+function sleep(ms) {
+    return new Promise(r => setTimeout(r, ms));
+}
+
+async function run() {
+    set_state("machine", 0);
+    set_state("can_reset", 0);
+    status.innerHTML = "Running";
+    var d = dump();
+    var s = d.err;
+    if (s != 0) {
+        set_state("can_reset", 1);
+        document.getElementById("message").innerHTML = "The machine is not ready to run: try resetting it.";
+        set_state("overlay", 1);
+    }
+    while (s == 0) {
+        await sleep(500);
+        step_simulation();
+        d = dump();
+        s = d.err;
+    }
+    set_state("can_reset", 1);
+    if (s == 7) {
+        status.innerHTML = "Halted";
+        document.getElementById("message").innerHTML = "The machine halted successfully.";
+        set_state("overlay", 1);
+    } else {
+        status.innerHTML = "Error";
+        document.getElementById("message").innerHTML = "The machine halted with an error: " + MSTATE[s];
+        set_state("overlay", 1);
+    }
+}
+
 bind("menu-reset", reset);
 bind("button-reset", reset);
 
 bind("menu-step", step);
 bind ("button-step", step);
+
+bind("menu-run", run);
+bind("button-run", run);
 
 function cursorPosition() {
     start = inputarea.selectionStart;
@@ -116,7 +170,8 @@ BINDINGS = {
 
 STATE = {
     edit: 1,
-    machine: 0, // can run?
+    can_reset: 1,
+    machine: 0,
 }
 
 window.onload = function() {

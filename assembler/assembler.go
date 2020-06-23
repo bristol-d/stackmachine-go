@@ -244,6 +244,7 @@ func parse_line(line string) (linedata, error) {
 	return data, nil
 }
 
+// numbering==false disassembles only a single instruction
 func Disassemble(code []word, numbering bool) []string {
 	text := []string {}
 
@@ -277,6 +278,9 @@ func Disassemble(code []word, numbering bool) []string {
 			m = fmt.Sprintf("0x%04x: %s", pos, m)
 		}
 		text = append(text, m)
+		if !numbering {
+			return text
+		}
 	}
 	return text
 }

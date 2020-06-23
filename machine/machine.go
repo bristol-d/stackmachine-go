@@ -1,6 +1,9 @@
 package machine
 
-import "fmt"
+import (
+	"fmt"
+	"../assembler"
+)
 
 type word = uint16
 
@@ -90,6 +93,9 @@ func Dump (m *Machine) map[string] interface{} {
 		top = m.stack[m.nstack - 1]
 	}
 
+	next_bytes := m.code[m.pc:m.pc+2]
+	next := assembler.Disassemble(next_bytes, false)
+
 	return map[string] interface{} {
 		"pc": m.pc,
 		"err": m.err,
@@ -97,6 +103,7 @@ func Dump (m *Machine) map[string] interface{} {
 		"top": top,
 		"stack": m.stack[0:m.nstack],
 		"code": m.code[0:8],
+		"next": next,
 	}
 }
 
