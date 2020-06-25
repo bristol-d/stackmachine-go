@@ -21,6 +21,9 @@ var TABLE = map[string] (struct {opcode word; argument bool}) {
 	"ADD" : {0x0101, false},
 	"SUB" : {0x0103, false},
 	"MUL" : {0x0104, false},
+	"MULC": {0x0105, false},
+	"DIV" : {0x0106, false},
+	"MOD" : {0x0107, false},
 
 	"AND" : {0x0201, false},
 	"OR"  : {0x0202, false},
@@ -38,6 +41,10 @@ var TABLE = map[string] (struct {opcode word; argument bool}) {
 	"CGE" : {0x0304, false},
 	"CLT" : {0x0305, false},
 	"CLE" : {0x0306, false},
+	"TZ"  : {0x0310, false},
+	"TN"  : {0x0311, false},
+	"TM"  : {0x0312, false},
+	"TL"  : {0x0313, false},
 
 	"J"   : {0x0401, true},
 	"JS"  : {0x0402, false},
@@ -45,6 +52,12 @@ var TABLE = map[string] (struct {opcode word; argument bool}) {
 	"JTS" : {0x0404, false},
 	"JF"  : {0x0405, true},
 	"JFS" : {0x0406, false},
+
+	"LOAD": {0x0501, true},
+	"STOR": {0x0502, true},
+	"LODS": {0x0503, false},
+	"STRS": {0x0504, false},
+
 }
 
 type linedata struct {

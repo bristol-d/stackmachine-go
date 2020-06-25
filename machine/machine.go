@@ -327,9 +327,150 @@ func op_ssr(m *Machine) uint8 {
 	return OK
 }
 
+// single-word tests
+func cmp1(f func(word) bool) func(*Machine) uint8 {
+	return func(m *Machine) uint8 {
+		if m.nstack < 1 {
+			m.err = UNDERFLOW
+			return m.err
+		}
+		x := _pop(m)
+		b := f(x)
+		if b {
+			_push(m, word(1))
+		} else {
+			_push(m, word(0))
+		}
+		return OK
+	}
+}
+
+
 func halt(m *Machine) uint8 {
 	m.pc-- // undo PC increment
 	return HALT
+}
+
+// multiplication with "carry": push 32-bit result as two words
+func mulc(m *Machine) uint8 {
+	if m.nstack < 2 {
+		m.err = UNDERFLOW
+		return m.err
+	}
+	y := _pop(m)
+	x := _pop(m)
+
+	var yy uint32 = uint32(y)
+	var xx uint32 = uint32(x)
+	var zz uint32 = xx * yy
+	var z word = word(zz & 0xFFFF)
+	// safe to push two as we just popped two
+	_push(m, z)
+	z = word (zz >> 16)
+	_push(m, z)
+	return OK
+}
+
+func div(m *Machine) uint8 {
+	if m.nstack < 2 {
+		m.err = UNDERFLOW
+		return m.err
+	}
+	y := _pop(m)
+	x := _pop(m)
+	if y == word(0) {
+		m.err = VALUE_ERROR
+		return m.err
+	}
+	_push(m, x / y)
+	return OK
+}
+
+func mod(m *Machine) uint8 {
+	if m.nstack < 2 {
+		m.err = UNDERFLOW
+		return m.err
+	}
+	y := _pop(m)
+	x := _pop(m)
+	if y == word(0) {
+		m.err = VALUE_ERROR
+		return m.err
+	}
+	_push(m, x % y)
+	return OK
+}
+
+// swap endianness
+func swe(m *Machine) uint8 {
+	if m.nstack < 1 {
+		m.err = UNDERFLOW
+		return m.err
+	}
+	w := _pop(m)
+	x := (w >> 8) | ((w & 0xFF) << 8)
+	_push(m, x)
+	return OK
+}
+
+func load(m *Machine) uint8 {
+	if m.nstack > 255 {
+		m.err = OVERFLOW
+		return m.err
+	}
+	var x word = m.code[m.pc]
+	m.pc++
+	if x >= 4096 {
+		m.err = VALUE_ERROR
+		return m.err
+	}
+	_push(m, m.data[x])
+	return OK
+}
+
+func store(m *Machine) uint8 {
+	if m.nstack < 1 {
+		m.err = UNDERFLOW
+		return m.err
+	}
+	var d word = _pop(m)
+	var x word = m.code[m.pc]
+	m.pc++
+	if x >= 4096 {
+		m.err = VALUE_ERROR
+		return m.err
+	}
+	m.data[x] = d
+	return OK
+}
+
+func loads(m *Machine) uint8 {
+	if m.nstack < 1 {
+		m.err = UNDERFLOW
+		return m.err
+	}
+	var x word = _pop(m)
+	if x >= 4096 {
+		m.err = VALUE_ERROR
+		return m.err
+	}
+	_push(m, m.data[x])
+	return OK
+}
+
+func stores(m *Machine) uint8 {
+	if m.nstack < 2 {
+		m.err = UNDERFLOW
+		return m.err
+	}
+	var d word = _pop(m)
+	var x word = _pop(m)
+	if x >= 4096 {
+		m.err = VALUE_ERROR
+		return m.err
+	}
+	m.data[x] = d
+	return OK
 }
 
 // the decoding table //
@@ -346,9 +487,10 @@ var INSTRUCTIONS = map[word] func(*Machine) uint8 {
 	//0x0011: addc,
 	0x0103: binary_operation(func(x, y word) word {return x - y}),
 	0x0104: binary_operation(func(x, y word) word {return x * y}),
-	//0x0014: muld,
-	//0x0015: mod,
-	//0x0016: div,
+	0x0105: mulc,
+	0x0106: div,
+	0x0107: mod,
+
 	0x0201: binary_operation(func(x, y word) word {return x & y}),
 	0x0202: binary_operation(func(x, y word) word {return x | y}),
 	0x0203: binary_operation(func(x, y word) word {return x ^ y}),
@@ -357,6 +499,7 @@ var INSTRUCTIONS = map[word] func(*Machine) uint8 {
 	0x0206: binary_operation(func(x, y word) word {return x >> y}),
 	0x0207: op_ssr,
 	0x0208: binary_operation(func(x, y word) word {return x << y}),
+	0x0209: swe,
 
 	0x0301: binary_operation(func(x, y word) word {return bw(x == y)}),
 	0x0302: binary_operation(func(x, y word) word {return bw(x != y)}),
@@ -364,6 +507,10 @@ var INSTRUCTIONS = map[word] func(*Machine) uint8 {
 	0x0304: binary_operation(func(x, y word) word {return bw(x >= y)}),
 	0x0305: binary_operation(func(x, y word) word {return bw(x <  y)}),
 	0x0306: binary_operation(func(x, y word) word {return bw(x <= y)}),
+	0x0310: cmp1(func(x word) bool {return x == 0}),
+	0x0311: cmp1(func(x word) bool {return x != 0}),
+	0x0312: cmp1(func(x word) bool {return x & 0x8000 != 0}),
+	0x0313: cmp1(func(x word) bool {return x & 1 != 0}),
 
 	0x0401: jump,
 	0x0402: jump_indirect,
@@ -371,6 +518,11 @@ var INSTRUCTIONS = map[word] func(*Machine) uint8 {
 	0x0404: jump_true_indirect,
 	0x0405: jump_false,
 	0x0406: jump_false_indirect,
+
+	0x0501: load,
+	0x0502: store,
+	0x0503: loads,
+	0x0504: stores,
 
 }
 

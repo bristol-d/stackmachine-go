@@ -99,3 +99,51 @@ func TestShifts(t *testing.T) {
 	assert.Equal(t, word(1), m.nstack)
 	assert.Equal(t, word(0xFF00), peek(m))
 }
+
+func TestMULC(t *testing.T) {
+	var M Machine
+	m := &M
+	Reset(m)
+	// PUSH #FFFF, PUSH #0002, MULC
+	// should give [FFFC, 0001]
+	load_program(m, []word{0x0001, 0xFFFF, 0x0001, 0x0002, 0x0105})
+	step(m)
+	step(m)
+	step(m)
+	assert.Equal(t, word(2), m.nstack)
+	assert.Equal(t, word(0x0001), m.stack[1])
+	assert.Equal(t, word(0xFFFE), m.stack[0])
+
+	Reset(m)
+	load_program(m, []word{0x0001, 0xFFF0, 0x0001, 0x0200, 0x0105})
+	step(m)
+	step(m)
+	step(m)
+	assert.Equal(t, word(2), m.nstack)
+	assert.Equal(t, word(0x01FF), m.stack[1])
+	assert.Equal(t, word(0xE000), m.stack[0])
+
+	Reset(m)
+	load_program(m, []word{0x0001, 0xFEDC, 0x0001, 0x1234, 0x0105})
+	step(m)
+	step(m)
+	step(m)
+	assert.Equal(t, word(2), m.nstack)
+	assert.Equal(t, word(0x121F), m.stack[1])
+	assert.Equal(t, word(0x3CB0), m.stack[0])
+}
+
+func TestSWE(t *testing.T) {
+	var M Machine
+	m := &M
+	Reset(m)
+	// PUSH #01FE, SWE, SWE
+	load_program(m, []word{0x0001, 0x01FE, 0x0209, 0x0209})
+	step(m)
+	step(m)
+	assert.Equal(t, word(1), m.nstack)
+	assert.Equal(t, word(0xFE01), peek(m))
+	step(m)
+	assert.Equal(t, word(1), m.nstack)
+	assert.Equal(t, word(0x01FE), peek(m))
+}
