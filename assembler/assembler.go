@@ -58,6 +58,7 @@ var TABLE = map[string] (struct {opcode word; argument bool}) {
 	"LODS": {0x0503, false},
 	"STRS": {0x0504, false},
 
+	"INT" : {0xffff, false},
 }
 
 type linedata struct {

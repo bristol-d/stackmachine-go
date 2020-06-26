@@ -34,7 +34,8 @@ const MSTATE = [
     'STACK OVERFLOW',
     'RETURN STACK OVERFLOW',
     'ARITHMETIC ERROR',
-    'HALTED'
+    'HALTED',
+    'INTERRUPT'
 ]
 
 document.getElementById("menu-assemble").onclick = function() {
@@ -55,7 +56,7 @@ Next: ${dump.next}
 Machine state: ${MSTATE[dump.err]}
 Stack size: ${dump.n}, top: ${dump.n > 0 ? hex(dump.top) : "n/a"}
 ` ;
-    if (dump.err > 0) {
+    if (dump.err > 0 && dump.err != 8) { // 8 is interrupt
         set_state("machine", 0);
     }
     var s = "(empty stack)";
@@ -119,6 +120,9 @@ async function run() {
         status.innerHTML = "Halted";
         document.getElementById("message").innerHTML = "The machine halted successfully.";
         set_state("overlay", 1);
+    } else if (s == 8) {
+        set_state("machine", 1);
+        set_state("can_reset", 1);
     } else {
         status.innerHTML = "Error";
         document.getElementById("message").innerHTML = "The machine halted with an error: " + MSTATE[s];

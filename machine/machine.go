@@ -27,6 +27,7 @@ const (
 	RET_OVERFLOW = iota
 	VALUE_ERROR = iota // e.g. division by 0
 	HALT = iota
+	INTERRUPT = iota
 )
 
 func Reset(m *Machine) {
@@ -108,6 +109,9 @@ func Dump (m *Machine) map[string] interface{} {
 }
 
 func Step (m *Machine) uint8 {
+	if m.err == INTERRUPT {
+		m.err = OK
+	}
 	if m.err != OK {
 		return m.err
 	}
@@ -473,6 +477,11 @@ func stores(m *Machine) uint8 {
 	return OK
 }
 
+// Does nothing, but causes the run loop to stop
+func interrupt(m *Machine) uint8 {
+	return INTERRUPT
+}
+
 // the decoding table //
 
 var INSTRUCTIONS = map[word] func(*Machine) uint8 {
@@ -524,6 +533,7 @@ var INSTRUCTIONS = map[word] func(*Machine) uint8 {
 	0x0503: loads,
 	0x0504: stores,
 
+	0xffff: interrupt,
 }
 
 func decode(instruction word) (func(*Machine) uint8, uint8) {
