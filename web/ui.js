@@ -110,11 +110,12 @@ async function run() {
     status.innerHTML = "Running";
     var d = dump();
     var s = d.err;
-    if (s != 0) {
+    if (s != 0 && s != 8) {
         set_state("can_reset", 1);
         document.getElementById("message").innerHTML = "The machine is not ready to run: try resetting it.";
         set_state("overlay", 1);
     }
+    s = 0;
     while (s == 0) {
         await sleep(500);
         step_simulation();
