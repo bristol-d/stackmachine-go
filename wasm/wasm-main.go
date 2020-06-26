@@ -53,7 +53,7 @@ func assemble (this js.Value, input []js.Value) interface{} {
 	lines := strings.Split(source, "\n")
 	code, err := assembler.Assemble_lines(lines)
 	if err != nil {
-		return js.ValueOf(err.Error())
+		return js.ValueOf("ERROR: " + err.Error())
 	}
 
 	text := assembler.Disassemble(code, true)

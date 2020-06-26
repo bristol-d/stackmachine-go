@@ -41,6 +41,12 @@ const MSTATE = [
 document.getElementById("menu-assemble").onclick = function() {
     status.innerHTML = "Assembling ...";
     result = assemble(inputarea.value);
+    if (result.startsWith("ERROR")) {
+        status.innerHTML = "Error.";
+        document.getElementById("message").innerHTML = result;
+        set_state('overlay', 1);
+        return
+    } 
     status.innerHTML = "Assembly complete";
     set_state("machine", 0);
     set_state("edit", 0);
