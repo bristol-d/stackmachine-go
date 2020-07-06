@@ -38,9 +38,13 @@
               
         </section>
         <section id="stack">
-            <p class="heading">Stack</p>
+            <p>
+                <span class="heading action" id="view-stack">Stack</span>
+                <span class="heading action" id="view-memory">Memory</span>
+            </p>
             <div class="stack-container">
-                <p class="bottom" id="stack-display"></p>
+                <p class="bottom" id="stack-display" x-display="stackview:1"></p>
+                <p class="bottom" id="memory-display" x-display="stackview:0"></p>
             </div>
         </section>
         <section id="controls">

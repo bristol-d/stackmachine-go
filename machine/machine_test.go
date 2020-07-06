@@ -147,3 +147,22 @@ func TestSWE(t *testing.T) {
 	assert.Equal(t, word(1), m.nstack)
 	assert.Equal(t, word(0x01FE), peek(m))
 }
+
+func TestLoadStore(t *testing.T) {
+	var M Machine
+	m := &M
+	Reset(m)
+	// PUSH #7, PUSH #0, STRS
+	// PUSH #0, LODS
+	load_program(m, []word{0x0001, 0x0007, 0x0001, 0x0000, 0x0504,
+						   0x0001, 0x0000, 0x0503})
+	step(m)
+	step(m)
+	step(m)
+	assert.Equal(t, word(0), m.nstack)
+	assert.Equal(t, word(7), m.data[0])
+	step(m)
+	step(m)
+	assert.Equal(t, word(1), m.nstack)
+	assert.Equal(t, word(7), m.stack[0])
+}

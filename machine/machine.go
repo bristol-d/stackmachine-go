@@ -35,6 +35,9 @@ func Reset(m *Machine) {
 	m.nstack = 0
 	m.nret = 0
 	m.err = OK
+	for i := 0; i < 4096; i++ {
+		m.data[i] = word(0)
+	}
 }
 
 func Load(m *Machine, p []word) {
@@ -105,6 +108,7 @@ func Dump (m *Machine) map[string] interface{} {
 		"stack": m.stack[0:m.nstack],
 		"code": m.code[0:8],
 		"next": next,
+		"mem": m.data[0:256],
 	}
 }
 
@@ -473,7 +477,7 @@ func stores(m *Machine) uint8 {
 		m.err = VALUE_ERROR
 		return m.err
 	}
-	m.data[x] = d
+	m.data[d] = x
 	return OK
 }
 

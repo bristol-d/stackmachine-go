@@ -81,7 +81,23 @@ Stack size: ${dump.n}, top: ${dump.n > 0 ? hex(dump.top) : "n/a"}
             s += "(...)";
         }
     }
+
+    var m = [];
+    var mm = [];
+    for (var i = 0; i < 128; i++) {
+        var n = dump.mem[i].toString(16);
+        while (n.length < 4) { n = "0" + n }
+        mm.push(n);
+        if (i % 8 == 7) {
+            m.push(mm.join("  "));
+            mm = [];
+        }
+    }
+
+    var m = m.join("\n");
+
     document.getElementById("stack-display").innerHTML = s;
+    document.getElementById("memory-display").innerHTML = m;
     return dump;
 }
 
@@ -158,6 +174,9 @@ bind("menu-speed-1", () => set_state('speed', 0));
 
 bind("menu-break", () => request_interrupt = true);
 
+bind("view-stack", () => set_state('stackview', 1));
+bind("view-memory", () => set_state('stackview', 0));
+
 function cursorPosition() {
     start = inputarea.selectionStart;
     end = inputarea.selectionEnd;
@@ -195,7 +214,8 @@ STATE = {
     edit: 1,
     can_reset: 1,
     machine: 0,
-    speed: 0
+    speed: 0,
+    stackview: 1
 }
 
 window.onload = function() {
