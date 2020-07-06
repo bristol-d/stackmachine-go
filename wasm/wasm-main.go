@@ -10,6 +10,7 @@ import (
 )
 
 var m *machine.Machine
+var data []uint16 // global so it survives resets of the machine
 
 func main() {
 	var M = machine.Machine {}
@@ -45,19 +46,22 @@ func step_simulation(this js.Value, input []js.Value) interface{} {
 
 func reset_simulation(this js.Value, input []js.Value) interface{} {
 	machine.Reset(m)
+	machine.LoadData(m, data)
 	return js.ValueOf(true)
 }
 
 func assemble (this js.Value, input []js.Value) interface{} {
 	source := input[0].String()
 	lines := strings.Split(source, "\n")
-	code, err := assembler.Assemble_lines(lines)
+	code, d, err := assembler.Assemble_lines(lines)
 	if err != nil {
 		return js.ValueOf("ERROR: " + err.Error())
 	}
 
 	text := assembler.Disassemble(code, true)
 	machine.Load(m, code)
+	data = d
+	machine.LoadData(m, d)
 
 	return js.ValueOf(strings.Join(text, "<br />"))
 }

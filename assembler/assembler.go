@@ -87,6 +87,14 @@ func is_alphanum(r rune) bool {
 	return false
 }
 
+func is_digit(r rune) bool {
+	return r >= '0' && r <= '9'
+}
+
+func is_xdigit(r rune) bool {
+	return is_digit(r) || (r >= 'A' && r <= 'F')
+}
+
 // Consume a leading [A-Za-z_][A-Za-z_0-9]*[:]
 // return (label, rest) where label may be nil
 func consume_label(source []rune) ([]rune, []rune) {
@@ -162,29 +170,100 @@ func consume_int(r []rune) (*uint16, []rune) {
 	}
 }
 
+/// Consume a one-character token, if it exists.
+/// Returns true/false to indicate if the token was found,
+/// and the rest of the stream.
+func consume_token1(token rune, r []rune) (bool, []rune) {
+	if len(r) > 0 && r[0] == token {
+		return true, r[1:]
+	} else {
+		return false, r
+	}
+}
+
+func parse_xdigit(r rune) word {
+	if is_digit(r) {
+		return word(r - '0')
+	} else {
+		return word(r - 'A' + 10)
+	}
+}
+
+/// Consume a hexadecimal constant in the format [0-9A-F]{1,4}
+func consume_constant(r []rune) (*word, []rune) {
+	if len(r) == 0 || !is_xdigit(r[0]) {
+		return nil, r
+	}
+	var value word = parse_xdigit(r[0])
+	r = r[1:]
+	if len(r) > 0 && is_xdigit(r[0]) {
+		value *= 16
+		value += parse_xdigit(r[0])
+		r = r[1:]
+	}
+	if len(r) > 0 && is_xdigit(r[0]) {
+		value *= 16
+		value += parse_xdigit(r[0])
+		r = r[1:]
+	}
+	if len(r) > 0 && is_xdigit(r[0]) {
+		value *= 16
+		value += parse_xdigit(r[0])
+		r = r[1:]
+	}
+	return &value, r
+}
+
 /// Parse a line in data mode.
-/// Format is LABEL: [length]
+/// Format is LABEL: [length] = [value [value]...]
 /// Default length is 1
-func parse_data_line(line string) (string, uint16) {
+func parse_data_line(line string) (string, uint16, []word) {
 	runes := []rune(line)
+	var data []word
 	label, rest := consume_label(runes)
 	if label == nil {
-		return "", 0
+		return "", 0, data
 	}
 	_, rest = consume_spaces(rest)
-	length, _ := consume_int(rest)
+	length, rest := consume_int(rest)
 	var l uint16 = 0
 	if length == nil {
 		l = 1
 	} else {
 		l = *length
 	}
-	return string(label), l
+
+	_, rest = consume_spaces(rest)
+	has_data, rest := consume_token1('=', rest)
+	if !has_data {
+		return string(label), l, data
+	}
+
+	_, rest = consume_spaces(rest)
+	var c *word
+	var change bool = false
+
+	for i := word(0); i < l; i++ {
+		c, rest = consume_constant(rest)
+		if c != nil {
+			data = append(data, *c)
+		} else {
+			break
+		}
+		change, rest = consume_spaces(rest)
+		if !change && len(rest) > 0 {
+			// something after a constant that's not a separator - error
+			return "", 0, data
+		}
+	}
+
+	return string(label), l, data
 }
 
-func Assemble_lines(lines []string) ([]word, error) {
+func Assemble_lines(lines []string) ([]word, []word, error) {
 	offset := word(0)
 	code := []word {}
+	data := []word {}
 	var labels = map[string] word {}
 	var refs = map[word] string {}
 	// first pass
@@ -195,12 +274,20 @@ func Assemble_lines(lines []string) ([]word, error) {
 		line = strip_line(line)
 		if line == "" { continue }
 		if data_mode {
-			label, length := parse_data_line(line)
+			label, length, d := parse_data_line(line)
 			if length > 0 {
 				labels[label] = data_index
 				data_index += length
+				for i := 0; i < len(d); i++ {
+					data = append(data, d[i])
+				}
+				if len(d) < int(length) {
+					for i := 0; i < int(length) - len(d); i++ {
+						data = append(data, word(0))
+					}
+				}
 			} else {
-				return nil, fmt.Errorf("Line %d: invalid line in data section", i+1)
+				return nil, nil, fmt.Errorf("Line %d: invalid line in data section", i+1)
 			}
 		} else {
 			if strings.HasPrefix(line, ".DATA") {
@@ -209,7 +296,7 @@ func Assemble_lines(lines []string) ([]word, error) {
 			}
 			d, e := parse_line(line)
 			if e != nil {
-				return nil, fmt.Errorf("Line %d: %s", i+1, e.Error())
+				return nil, nil, fmt.Errorf("Line %d: %s", i+1, e.Error())
 			}
 			if d.label != nil {
 				labels[*d.label] = offset
@@ -233,11 +320,11 @@ func Assemble_lines(lines []string) ([]word, error) {
 	for k, v := range refs {
 		dest, exists := labels[v]
 		if !exists {
-			return nil, fmt.Errorf("Label %s referenced but never defined.", v)
+			return nil, nil, fmt.Errorf("Label %s referenced but never defined.", v)
 		}
 		code[k] = dest 
 	}
-	return code, nil
+	return code, data, nil
 }
 
 func strip_line(line string) string {

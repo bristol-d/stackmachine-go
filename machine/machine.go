@@ -49,6 +49,15 @@ func Load(m *Machine, p []word) {
 	}
 }
 
+func LoadData(m *Machine, p []word) {
+    for i := 0; i < len(p); i++ {
+        m.data[i] = p[i]
+	}
+	for i := len(p); i < len(m.data); i++ {
+		m.data[i] = word(0)
+	}
+}
+
 // pre: stack not empty
 // this is the internal helper function
 func _pop (m *Machine) word {
