@@ -2,32 +2,33 @@ package machine
 
 import (
 	"fmt"
+
 	"../assembler"
 )
 
 type word = uint16
 
 type Machine struct {
-	stack [256] word
-	nstack uint16
-	retstack [256] word
-	nret uint16
-	code [4096] word
-	data [4096] word
-	pc word
-	err uint8
+	stack    [256]word
+	nstack   uint16
+	retstack [256]word
+	nret     uint16
+	code     [4096]word
+	data     [4096]word
+	pc       word
+	err      uint8
 }
 
 const (
-	OK = iota
-	ILLEGAL = iota
-	UNDERFLOW = iota
+	OK            = iota
+	ILLEGAL       = iota
+	UNDERFLOW     = iota
 	RET_UNDERFLOW = iota
-	OVERFLOW = iota
-	RET_OVERFLOW = iota
-	VALUE_ERROR = iota // e.g. division by 0
-	HALT = iota
-	INTERRUPT = iota
+	OVERFLOW      = iota
+	RET_OVERFLOW  = iota
+	VALUE_ERROR   = iota // e.g. division by 0
+	HALT          = iota
+	INTERRUPT     = iota
 )
 
 func Reset(m *Machine) {
@@ -41,8 +42,8 @@ func Reset(m *Machine) {
 }
 
 func Load(m *Machine, p []word) {
-    for i := 0; i < len(p); i++ {
-        m.code[i] = p[i]
+	for i := 0; i < len(p); i++ {
+		m.code[i] = p[i]
 	}
 	for i := len(p); i < len(m.code); i++ {
 		m.code[i] = word(0)
@@ -50,8 +51,8 @@ func Load(m *Machine, p []word) {
 }
 
 func LoadData(m *Machine, p []word) {
-    for i := 0; i < len(p); i++ {
-        m.data[i] = p[i]
+	for i := 0; i < len(p); i++ {
+		m.data[i] = p[i]
 	}
 	for i := len(p); i < len(m.data); i++ {
 		m.data[i] = word(0)
@@ -60,7 +61,7 @@ func LoadData(m *Machine, p []word) {
 
 // pre: stack not empty
 // this is the internal helper function
-func _pop (m *Machine) word {
+func _pop(m *Machine) word {
 	if m.nstack == 0 {
 		panic("pop on empty stack")
 	}
@@ -82,10 +83,10 @@ func peek(m *Machine) word {
 	if m.nstack == 0 {
 		panic("peek on empty stack")
 	}
-	return m.stack[m.nstack - 1]
+	return m.stack[m.nstack-1]
 }
 
-func dump (m *Machine) {
+func dump(m *Machine) {
 	fmt.Printf("M pc=%04x stack=%d\n", m.pc, m.nstack)
 	fmt.Printf("  next=%04x\n", m.code[m.pc])
 	if m.nstack > 0 {
@@ -100,28 +101,30 @@ func dump (m *Machine) {
 	}
 }
 
-func Dump (m *Machine) map[string] interface{} {
+func Dump(m *Machine) map[string]interface{} {
 	top := word(0)
 	if m.nstack > 0 {
-		top = m.stack[m.nstack - 1]
+		top = m.stack[m.nstack-1]
 	}
 
-	next_bytes := m.code[m.pc:m.pc+2]
+	next_bytes := m.code[m.pc : m.pc+2]
 	next := assembler.Disassemble(next_bytes, false)
 
-	return map[string] interface{} {
-		"pc": m.pc,
-		"err": m.err,
-		"n": m.nstack,
-		"top": top,
+	return map[string]interface{}{
+		"pc":    m.pc,
+		"err":   m.err,
+		"n":     m.nstack,
+		"top":   top,
 		"stack": m.stack[0:m.nstack],
-		"code": m.code[0:8],
-		"next": next,
-		"mem": m.data[0:256],
+		"code":  m.code[0:8],
+		"next":  next,
+		"mem":   m.data[0:256],
+		"r":     m.nret,
+		"rr":    m.retstack[0:m.nret],
 	}
 }
 
-func Step (m *Machine) uint8 {
+func Step(m *Machine) uint8 {
 	if m.err == INTERRUPT {
 		m.err = OK
 	}
@@ -132,7 +135,7 @@ func Step (m *Machine) uint8 {
 	return m.err
 }
 
-func step (m *Machine) {
+func step(m *Machine) {
 	// fetch
 	var instruction word = m.code[m.pc]
 	// decode
@@ -151,7 +154,7 @@ func step (m *Machine) {
 
 // instructions //
 
-func add (m *Machine) uint8 {
+func add(m *Machine) uint8 {
 	if m.nstack < 2 {
 		m.err = UNDERFLOW
 		return m.err
@@ -165,7 +168,7 @@ func add (m *Machine) uint8 {
 }
 
 // this is the push instruction
-func push (m *Machine) uint8 {
+func push(m *Machine) uint8 {
 	if m.nstack > 255 {
 		m.err = OVERFLOW
 		return m.err
@@ -178,7 +181,7 @@ func push (m *Machine) uint8 {
 }
 
 // this is the instruction
-func pop (m *Machine) uint8 {
+func pop(m *Machine) uint8 {
 	if m.nstack == 0 {
 		m.err = UNDERFLOW
 		return m.err
@@ -187,7 +190,7 @@ func pop (m *Machine) uint8 {
 	return OK
 }
 
-func dup (m *Machine) uint8 {
+func dup(m *Machine) uint8 {
 	if m.nstack == 0 {
 		m.err = UNDERFLOW
 		return m.err
@@ -201,7 +204,7 @@ func dup (m *Machine) uint8 {
 	return OK
 }
 
-func swap (m *Machine) uint8 {
+func swap(m *Machine) uint8 {
 	if m.nstack < 2 {
 		m.err = UNDERFLOW
 		return m.err
@@ -226,7 +229,7 @@ func binary_operation(f func(word, word) word) func(*Machine) uint8 {
 		_push(m, z)
 		return OK
 	}
-} 
+}
 
 func binary_not(m *Machine) uint8 {
 	if m.nstack < 1 {
@@ -258,7 +261,6 @@ func jump_indirect(m *Machine) uint8 {
 	return OK
 }
 
-
 func jump(m *Machine) uint8 {
 	target := m.code[m.pc]
 	m.pc++
@@ -274,7 +276,7 @@ func jump_true(m *Machine) uint8 {
 	condition := _pop(m)
 	target := m.code[m.pc]
 	m.pc++
-	if condition & 0x01 == 0x01 {
+	if condition&0x01 == 0x01 {
 		m.pc = target
 	}
 	return OK
@@ -288,7 +290,7 @@ func jump_false(m *Machine) uint8 {
 	condition := _pop(m)
 	target := m.code[m.pc]
 	m.pc++
-	if condition & 0x01 == 0x00 {
+	if condition&0x01 == 0x00 {
 		m.pc = target
 	}
 	return OK
@@ -301,7 +303,7 @@ func jump_true_indirect(m *Machine) uint8 {
 	}
 	target := _pop(m)
 	condition := _pop(m)
-	if condition & 0x01 == 0x01 {
+	if condition&0x01 == 0x01 {
 		m.pc = target
 	}
 	return OK
@@ -314,7 +316,7 @@ func jump_false_indirect(m *Machine) uint8 {
 	}
 	target := _pop(m)
 	condition := _pop(m)
-	if condition & 0x01 == 0x00 {
+	if condition&0x01 == 0x00 {
 		m.pc = target
 	}
 	return OK
@@ -328,7 +330,7 @@ func op_ssr(m *Machine) uint8 {
 	}
 	y := _pop(m)
 	x := _pop(m)
-	if (y >= 16) {
+	if y >= 16 {
 		_push(m, word(0))
 		return OK
 	}
@@ -337,7 +339,7 @@ func op_ssr(m *Machine) uint8 {
 	r := x >> y
 	var mask word = 0
 	if hi {
-		mask = 0xffff << (16-y)
+		mask = 0xffff << (16 - y)
 	}
 	r |= mask
 	_push(m, r)
@@ -362,7 +364,6 @@ func cmp1(f func(word) bool) func(*Machine) uint8 {
 	}
 }
 
-
 func halt(m *Machine) uint8 {
 	m.pc-- // undo PC increment
 	return HALT
@@ -383,7 +384,7 @@ func mulc(m *Machine) uint8 {
 	var z word = word(zz & 0xFFFF)
 	// safe to push two as we just popped two
 	_push(m, z)
-	z = word (zz >> 16)
+	z = word(zz >> 16)
 	_push(m, z)
 	return OK
 }
@@ -399,7 +400,7 @@ func div(m *Machine) uint8 {
 		m.err = VALUE_ERROR
 		return m.err
 	}
-	_push(m, x / y)
+	_push(m, x/y)
 	return OK
 }
 
@@ -414,7 +415,7 @@ func mod(m *Machine) uint8 {
 		m.err = VALUE_ERROR
 		return m.err
 	}
-	_push(m, x % y)
+	_push(m, x%y)
 	return OK
 }
 
@@ -520,7 +521,7 @@ func interrupt(m *Machine) uint8 {
 
 // the decoding table //
 
-var INSTRUCTIONS = map[word] func(*Machine) uint8 {
+var INSTRUCTIONS = map[word]func(*Machine) uint8{
 	0x0000: halt,
 
 	0x0001: push,
@@ -530,32 +531,32 @@ var INSTRUCTIONS = map[word] func(*Machine) uint8 {
 
 	0x0101: add,
 	//0x0011: addc,
-	0x0103: binary_operation(func(x, y word) word {return x - y}),
-	0x0104: binary_operation(func(x, y word) word {return x * y}),
+	0x0103: binary_operation(func(x, y word) word { return x - y }),
+	0x0104: binary_operation(func(x, y word) word { return x * y }),
 	0x0105: mulc,
 	0x0106: div,
 	0x0107: mod,
 
-	0x0201: binary_operation(func(x, y word) word {return x & y}),
-	0x0202: binary_operation(func(x, y word) word {return x | y}),
-	0x0203: binary_operation(func(x, y word) word {return x ^ y}),
-	0x0204: binary_operation(func(x, y word) word {return ^(x & y)}),
+	0x0201: binary_operation(func(x, y word) word { return x & y }),
+	0x0202: binary_operation(func(x, y word) word { return x | y }),
+	0x0203: binary_operation(func(x, y word) word { return x ^ y }),
+	0x0204: binary_operation(func(x, y word) word { return ^(x & y) }),
 	0x0205: binary_not,
-	0x0206: binary_operation(func(x, y word) word {return x >> y}),
+	0x0206: binary_operation(func(x, y word) word { return x >> y }),
 	0x0207: op_ssr,
-	0x0208: binary_operation(func(x, y word) word {return x << y}),
+	0x0208: binary_operation(func(x, y word) word { return x << y }),
 	0x0209: swe,
 
-	0x0301: binary_operation(func(x, y word) word {return bw(x == y)}),
-	0x0302: binary_operation(func(x, y word) word {return bw(x != y)}),
-	0x0303: binary_operation(func(x, y word) word {return bw(x >  y)}),
-	0x0304: binary_operation(func(x, y word) word {return bw(x >= y)}),
-	0x0305: binary_operation(func(x, y word) word {return bw(x <  y)}),
-	0x0306: binary_operation(func(x, y word) word {return bw(x <= y)}),
-	0x0310: cmp1(func(x word) bool {return x == 0}),
-	0x0311: cmp1(func(x word) bool {return x != 0}),
-	0x0312: cmp1(func(x word) bool {return x & 0x8000 != 0}),
-	0x0313: cmp1(func(x word) bool {return x & 1 != 0}),
+	0x0301: binary_operation(func(x, y word) word { return bw(x == y) }),
+	0x0302: binary_operation(func(x, y word) word { return bw(x != y) }),
+	0x0303: binary_operation(func(x, y word) word { return bw(x > y) }),
+	0x0304: binary_operation(func(x, y word) word { return bw(x >= y) }),
+	0x0305: binary_operation(func(x, y word) word { return bw(x < y) }),
+	0x0306: binary_operation(func(x, y word) word { return bw(x <= y) }),
+	0x0310: cmp1(func(x word) bool { return x == 0 }),
+	0x0311: cmp1(func(x word) bool { return x != 0 }),
+	0x0312: cmp1(func(x word) bool { return x&0x8000 != 0 }),
+	0x0313: cmp1(func(x word) bool { return x&1 != 0 }),
 
 	0x0401: jump,
 	0x0402: jump_indirect,

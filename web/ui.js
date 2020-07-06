@@ -62,6 +62,7 @@ function dump() {
 Next: ${dump.next}
 Machine state: ${MSTATE[dump.err]}
 Stack size: ${dump.n}, top: ${dump.n > 0 ? hex(dump.top) : "n/a"}
+Function state: depth = ${dump.r}, ${dump.r == 0 ? "not in a function": "return address " + hex(dump.rr[dump.rr.length - 1])}
 ` ;
     if (dump.err > 0 && dump.err != 8) { // 8 is interrupt
         set_state("machine", 0);
