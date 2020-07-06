@@ -6,17 +6,17 @@
 ; starting at location 1, with location 0 used as a pointer
 ; an optional interrupt occurs before every number in the sequence
 
-            PUSH #1     ; initialise data pointer to 1
-            STOR #0
+            PUSH array  ; initialise data pointer to array (1)
+            STOR index
             PUSH #7     ; the original N
 start:      DUP         ; store in data memory
-            LOAD #0
+            LOAD index
             STRS
-            LOAD #0     ; increase pointer in data[0]
+            LOAD index  ; increase pointer in data[0]
             PUSH #1
             ADD
-            STOR #0
-            ; INT         ; interrupt - enable if needed
+            STOR index
+            ; INT       ; interrupt - enable if needed
             DUP         ; make a copy for testing if it's 1
             PUSH #1
             CEQ
@@ -34,3 +34,7 @@ odd:        PUSH #3
             ADD
             J start
 end:        HALT
+
+.DATA
+index:
+array:
