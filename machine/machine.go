@@ -490,6 +490,29 @@ func stores(m *Machine) uint8 {
 	return OK
 }
 
+func call(m *Machine) uint8 {
+	if m.nret > 255 {
+		m.err = RET_OVERFLOW
+		return m.err
+	}
+	var target word = m.code[m.pc]
+	m.pc++
+	m.retstack[m.nret] = m.pc
+	m.nret++
+	m.pc = target
+	return OK
+}
+
+func ret(m *Machine) uint8 {
+	if m.nret == 0 {
+		m.err = RET_UNDERFLOW
+		return m.err
+	}
+	m.nret--
+	m.pc = m.retstack[m.nret]
+	return OK
+}
+
 // Does nothing, but causes the run loop to stop
 func interrupt(m *Machine) uint8 {
 	return INTERRUPT
@@ -540,6 +563,8 @@ var INSTRUCTIONS = map[word] func(*Machine) uint8 {
 	0x0404: jump_true_indirect,
 	0x0405: jump_false,
 	0x0406: jump_false_indirect,
+	0x0410: call,
+	0x0411: ret,
 
 	0x0501: load,
 	0x0502: store,

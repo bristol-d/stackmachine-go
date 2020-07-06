@@ -52,6 +52,8 @@ var TABLE = map[string] (struct {opcode word; argument bool}) {
 	"JTS" : {0x0404, false},
 	"JF"  : {0x0405, true},
 	"JFS" : {0x0406, false},
+	"CALL": {0x0410, true},
+	"RET" : {0x0411, false},
 
 	"LOAD": {0x0501, true},
 	"STOR": {0x0502, true},
