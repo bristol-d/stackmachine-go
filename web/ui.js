@@ -1,5 +1,6 @@
 const inputarea = document.getElementById("inputarea");
 const status = document.getElementById("footer-right");
+var request_interrupt = false;
 
 function bind(id, action) {
     document.getElementById(id).onclick = action;
@@ -107,6 +108,7 @@ function sleep(ms) {
 async function run() {
     set_state("machine", 0);
     set_state("can_reset", 0);
+    set_state("running", 1);
     status.innerHTML = "Running";
     var d = dump();
     var s = d.err;
@@ -117,12 +119,17 @@ async function run() {
     }
     s = 0;
     while (s == 0) {
-        await sleep(500);
+        await sleep(STATE.speed ? 50 : 500);
         step_simulation();
         d = dump();
         s = d.err;
+        if (request_interrupt) {
+            request_interrupt = false;
+            s = 8;
+        }
     }
     set_state("can_reset", 1);
+    set_state("running", 0);
     if (s == 7) {
         status.innerHTML = "Halted";
         document.getElementById("message").innerHTML = "The machine halted successfully.";
@@ -145,6 +152,11 @@ bind ("button-step", step);
 
 bind("menu-run", run);
 bind("button-run", run);
+
+bind("menu-speed-0", () => set_state('speed', 1));
+bind("menu-speed-1", () => set_state('speed', 0));
+
+bind("menu-break", () => request_interrupt = true);
 
 function cursorPosition() {
     start = inputarea.selectionStart;
@@ -183,6 +195,7 @@ STATE = {
     edit: 1,
     can_reset: 1,
     machine: 0,
+    speed: 0
 }
 
 window.onload = function() {

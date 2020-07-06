@@ -12,10 +12,15 @@
                 <li id="menu-assemble" x-display="edit:1">Assemble</li>    
             </ul>
             <ul x-display="edit:0">
-                <li id="menu-edit">Edit</li>
+                <li id="menu-edit" x-display="running:0">Edit</li>
                 <li id="menu-reset" x-display="can_reset:1">Reset</li>
                 <li id="menu-step" x-display="machine:1">Step</li>
                 <li id="menu-run" x-display="machine:1">Run</li>
+            </ul>
+            <ul x-display="edit:0">
+                <li id="menu-speed-0" x-display="speed:0">Faster</li>
+                <li id="menu-speed-1" x-display="speed:1">Slower</li>
+                <li id="menu-break"   x-display="running:1">Interrupt</li>
             </ul>
             <ul>
                 <li id="menu-about">About</li>
