@@ -111,6 +111,8 @@ footer {
 
 #binary-container {
     white-space: pre;
+    height: 100%;
+    overflow: auto;
 }
 
 #overlay {
