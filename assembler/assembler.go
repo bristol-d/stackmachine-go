@@ -146,35 +146,87 @@ func consume_opcode(source []rune) ([]rune, []rune) {
 	return original[0:count-1], source
 }
 
+/// Consume an int in decimal notation.
+func consume_int(r []rune) (*uint16, []rune) {
+	var x uint16 = 0
+	found := false
+	for len(r) > 0 && r[0] >= '0' && r[0] <= '9' {
+		found = true
+		x = 10*x + uint16(r[0] - '0')
+		r = r[1:]
+	}
+	if found {
+		return &x, r
+	} else {
+		return nil, r
+	}
+}
+
+/// Parse a line in data mode.
+/// Format is LABEL: [length]
+/// Default length is 1
+func parse_data_line(line string) (string, uint16) {
+	runes := []rune(line)
+	label, rest := consume_label(runes)
+	if label == nil {
+		return "", 0
+	}
+	_, rest = consume_spaces(rest)
+	length, _ := consume_int(rest)
+	var l uint16 = 0
+	if length == nil {
+		l = 1
+	} else {
+		l = *length
+	}
+	return string(label), l
+}
+
 func Assemble_lines(lines []string) ([]word, error) {
 	offset := word(0)
 	code := []word {}
 	var labels = map[string] word {}
 	var refs = map[word] string {}
 	// first pass
+	data_mode := false
+	var data_index uint16 = 0
 	for i := 0; i < len(lines); i++ {
 		line := lines[i]
 		line = strip_line(line)
 		if line == "" { continue }
-		d, e := parse_line(line)
-		if e != nil {
-			return nil, fmt.Errorf("Line %d: %s", i+1, e.Error())
-		}
-		if d.label != nil {
-			labels[*d.label] = offset
-		}
-		if d.len > 0 {
-			code = append(code, d.opcode)
-			offset++
-		}
-		if d.len > 1 {
-			code = append(code, d.operand)
-			if d.reference != nil {
-				// the operand is currently an unresolved reference
-				// save it in the map for the second pass
-				refs[offset] = *d.reference
+		if data_mode {
+			label, length := parse_data_line(line)
+			if length > 0 {
+				labels[label] = data_index
+				data_index += length
+			} else {
+				return nil, fmt.Errorf("Line %d: invalid line in data section", i+1)
 			}
-			offset++
+		} else {
+			if strings.HasPrefix(line, ".DATA") {
+				data_mode = true
+				continue
+			}
+			d, e := parse_line(line)
+			if e != nil {
+				return nil, fmt.Errorf("Line %d: %s", i+1, e.Error())
+			}
+			if d.label != nil {
+				labels[*d.label] = offset
+			}
+			if d.len > 0 {
+				code = append(code, d.opcode)
+				offset++
+			}
+			if d.len > 1 {
+				code = append(code, d.operand)
+				if d.reference != nil {
+					// the operand is currently an unresolved reference
+					// save it in the map for the second pass
+					refs[offset] = *d.reference
+				}
+				offset++
+			}
 		}
 	}
 	// second pass
