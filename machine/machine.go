@@ -3,7 +3,7 @@ package machine
 import (
 	"fmt"
 
-	"../assembler"
+	"go-stackmachine/assembler"
 )
 
 type word = uint16

@@ -6,8 +6,8 @@ import (
 	// "io"
 	"bufio"
 	"strings"
-	"./machine"
-	"./assembler"
+	"go-stackmachine/machine"
+	"go-stackmachine/assembler"
 )
 
 func usage() {
@@ -48,7 +48,7 @@ func assemble() {
 			lines = append(lines, line)
 		}
 	}
-	program, err := assembler.Assemble_lines(lines)
+	program, _, err := assembler.Assemble_lines(lines)
 	if err != nil {
 		fmt.Printf("Error assembling program: %s\n", err.Error())
 		return

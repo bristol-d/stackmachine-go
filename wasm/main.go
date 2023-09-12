@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"../machine"
-	"../assembler"
+	"go-stackmachine/machine"
+	"go-stackmachine/assembler"
 	"strings"
 	"syscall/js"
 	"encoding/json"
