@@ -8,7 +8,7 @@ a value stack (capacity 256), and a return stack (capacity 256).
 Instructions are 16 bits long; instructions that take an argument are a total
 of 32 bits long.
 
-See [docs.md](docs.md) for more details.
+See [docs.md](docs.md) for more details, or try the included [3n+1.asm](3n+1.asm) or [bcd.asm](bcd.asm) example programs that you can paste into the running simulator.
 
 ## Building
 
