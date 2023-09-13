@@ -79,19 +79,11 @@
             var wasm;
             WebAssembly.instantiateStreaming(fetch(SOURCE), go.importObject).then(
                 (result) => {
-                    mod = result.module;
-                    instance = result.instance;
-                    wasm = instance;
-                    console.log("Loaded WebAssembly module.");
-                    initialise();
+                    go.run(result.instance);
                 }
             ).catch((err) => {
                 console.error(err);
             });
-
-            async function initialise() {
-                await go.run(instance);
-            }
         </script>
 
         <script src="ui.js"></script>
