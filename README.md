@@ -8,4 +8,12 @@ a value stack (capacity 256), and a return stack (capacity 256).
 Instructions are 16 bits long; instructions that take an argument are a total
 of 32 bits long.
 
-See the documentation (not currently in the repo) for details of the instructions.
+See [docs.md](docs.md) for more details.
+
+## Building
+
+With golang installed, run `build.bat` in the main folder to produce the binary.
+
+On linux, go to wasm/ and run `GOOS=js GOARCH=wasm go build -o go-stackmachine.wasm` then copy the file to web/.
+
+Serve the files from web, for example with the `simplehttpserver` go module (browsers will complain about loading wasm from file:// so you can't just open index.html.)
